@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gspread
 from google.oauth2 import service_account
-
+from io import BytesIO
 # Configuración para Google Sheets usando las credenciales almacenadas en secrets.toml
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
@@ -51,7 +51,7 @@ def get_serviplus_data(region=None, mes=None):
 
     # Filtramos por región y mes si están definidos
     if region:
-        merged_df = merged_df[merged_df['REGIÓN'] == region]
+        merged_df = merged_df[merged_df['CAPITAL'] == region]
     if mes:
         merged_df = merged_df[merged_df['Mes'] == mes]
 
@@ -110,6 +110,9 @@ def crear_grafico_radar_general(datos, etiquetas, titulo, colores_fondo):
     plt.ylim(0.5, 4.5)
     plt.title(titulo, size=16, color='darkblue', y=1.1, weight='bold')
     st.pyplot(fig)
+    
+    # Retornar el objeto fig para guardarlo
+    return fig
 
 # Aplicación en Streamlit
 st.markdown("## Evaluación de Satisfacción del Cliente")
@@ -134,7 +137,17 @@ if empresa == "Serviplus":
             promedios_generales = get_serviplus_data(region=region_seleccionada, mes=mes_seleccionado)
             etiquetas = ['Pregunta 1', 'Pregunta 2', 'Pregunta 3', 'Pregunta 4', 'Pregunta 5', 'Pregunta 6']
             colores_fondo = ['#E05666', '#E3787B', '#E09498', '#E0B2A3']  # Colores para Serviplus
-            crear_grafico_radar_general(promedios_generales.values, etiquetas, 'Satisfacción del Cliente Serviplus', colores_fondo)
+            fig = crear_grafico_radar_general(promedios_generales.values, etiquetas, 'Satisfacción del Cliente Serviplus', colores_fondo)
+            # Guardar el gráfico en un buffer de memoria y crear el botón de descarga
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            buf.seek(0)
+            st.download_button(
+                label="Descargar gráfico como PNG",
+                data=buf,
+                file_name=f"satisfaccion_seviplus_{region_seleccionada}y_mes_{mes_seleccionado}.png",
+                mime="image/png"
+            )
     except ValueError as e:
         st.warning(e)
 
@@ -146,6 +159,16 @@ elif empresa == "Transporte":
             promedios_generales = get_transporte_data(mes=mes_seleccionado)
             etiquetas = ['Pregunta 1', 'Pregunta 2', 'Pregunta 3', 'Pregunta 4', 'Pregunta 5', 'Pregunta 6', 'Pregunta 7']
             colores_fondo = ['#283593', '#303F9F', '#3949AB', '#3F51B5']
-            crear_grafico_radar_general(promedios_generales.values, etiquetas, 'Evaluación Satisfacción del Cliente Transporte', colores_fondo)
+            fig = crear_grafico_radar_general(promedios_generales.values, etiquetas, 'Evaluación Satisfacción del Cliente Transporte', colores_fondo)
+            # Guardar el gráfico en un buffer de memoria y crear el botón de descarga
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            buf.seek(0)
+            st.download_button(
+                label="Descargar gráfico como PNG",
+                data=buf,
+                file_name=f"satisfaccion_transporte_mes_{mes_seleccionado}.png",
+                mime="image/png"
+            )
     except ValueError as e:
         st.warning(e)
